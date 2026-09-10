@@ -1,0 +1,65 @@
+name: MoojPay Backend CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore MoojPay.sln
+
+      - name: Build (backend.build)
+        run: dotnet build MoojPay.sln -c Release --no-restore
+
+      - name: Format check (backend.format-check)
+        run: dotnet format --verify-no-changes
+
+      - name: Unit tests (backend.unit-tests)
+        run: dotnet test tests/MoojPay.UnitTests -c Release
+
+      - name: Integration tests (backend.integration-tests)
+        run: dotnet test tests/MoojPay.IntegrationTests -c Release
+
+      - name: Marketplace order persistence tests (backend.marketplace-order-persistence-tests)
+        run: dotnet test tests/MoojPay.IntegrationTests -c Release --filter Category=MarketplaceOrderPersistence
+
+      - name: Zaps client isolation tests (backend.zaps-client-isolation-tests)
+        run: dotnet test tests/MoojPay.UnitTests -c Release --filter Category=ZapsClient
+
+      - name: Firebase client isolation tests (backend.firebase-client-isolation-tests)
+        run: dotnet test tests/MoojPay.UnitTests -c Release --filter Category=FirebaseClient
+
+      - name: Dependency vulnerability scan (backend.security-dependency-scan)
+        run: dotnet list MoojPay.sln package --vulnerable --include-transitive
+
+      - name: PCI boundary tests (backend.pci-boundary-tests)
+        run: dotnet test tests/MoojPay.UnitTests -c Release --filter Category=PciBoundary
+
+  # Container build/push is described by the accepted BuildSpec's rollout plan (Workload Identity
+  # Federation to Google Artifact Registry) but is not wired to a real GCP project/pool in this
+  # greenfield repository yet. Left as an explicit placeholder rather than a fabricated deploy step.
+  # publish:
+  #   needs: build-and-check
+  #   if: github.ref == 'refs/heads/main'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: google-github-actions/auth@v2
+  #       with:
+  #         workload_identity_provider: <configure-before-enabling>
+  #         service_account: <configure-before-enabling>
+  #     - run: echo "Configure Artifact Registry push once WIF is provisioned."

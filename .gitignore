@@ -1,0 +1,8 @@
+bin/
+obj/
+*.user
+.vs/
+
+# OctoEvidence connection (contains a bearer token; never commit)
+.mcp.json
+.octoevidence/
