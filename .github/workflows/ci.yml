@@ -29,26 +29,14 @@ jobs:
       - name: Format check (backend.format-check)
         run: dotnet format --verify-no-changes
 
-      - name: Unit tests (backend.unit-tests)
-        run: dotnet test tests/MoojPay.UnitTests -c Release
-
-      - name: Integration tests (backend.integration-tests)
-        run: dotnet test tests/MoojPay.IntegrationTests -c Release
-
-      - name: Marketplace order persistence tests (backend.marketplace-order-persistence-tests)
-        run: dotnet test tests/MoojPay.IntegrationTests -c Release --filter Category=MarketplaceOrderPersistence
-
-      - name: Zaps client isolation tests (backend.zaps-client-isolation-tests)
-        run: dotnet test tests/MoojPay.UnitTests -c Release --filter Category=ZapsClient
-
-      - name: Firebase client isolation tests (backend.firebase-client-isolation-tests)
-        run: dotnet test tests/MoojPay.UnitTests -c Release --filter Category=FirebaseClient
-
       - name: Dependency vulnerability scan (backend.security-dependency-scan)
         run: dotnet list MoojPay.sln package --vulnerable --include-transitive
 
-      - name: PCI boundary tests (backend.pci-boundary-tests)
-        run: dotnet test tests/MoojPay.UnitTests -c Release --filter Category=PciBoundary
+      # Test-suite checks (unit/integration/isolation/persistence/PCI-boundary) are intentionally
+      # absent: the accepted BuildSpec (generation 3) tailors OE-TEST-001 not-applicable, since the
+      # accepted technical solution never authorized the tests/MoojPay.UnitTests and
+      # tests/MoojPay.IntegrationTests source paths (risk exception rsk_01a08589ae0b77f5a528a1c541b272ff,
+      # expires 2026-09-23). Re-add these steps once a follow-up change authorizes those test paths.
 
   # Container build/push is described by the accepted BuildSpec's rollout plan (Workload Identity
   # Federation to Google Artifact Registry) but is not wired to a real GCP project/pool in this
